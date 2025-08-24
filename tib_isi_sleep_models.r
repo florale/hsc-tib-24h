@@ -23,7 +23,7 @@ m_tib_isig_sleep <- readRDS(file.path(out, "m_tib_isig_sleep.rds"))
 ## 5 quartiles -----------------------
 d_tibq5_isig_sleep <- emmeans::ref_grid(m_tib_isig_sleep$model,
   at = list(
-    bedrest_min = quantile(model.frame(m_tib_isig_sleep)$bedrest_min, probs = seq(0, 1, length.out = 5), na.rm = TRUE)
+    bedrest_min = quantile(model.frame(m_tib_isig_sleep)$bedrest_min, probs = c(0.1, 0.25, 0.5, 0.75, 0.9), na.rm = TRUE)
   )
 )@grid
 d_tibq5_isig_sleep <- as.data.table(d_tibq5_isig_sleep)
@@ -95,6 +95,7 @@ pred_tibq5_isig_sleep_draws <- lapply(pred_tibq5_isig_sleep, function(d) {
   }
   d
 })
+
 saveRDS(pred_tibq5_isig_sleep_draws, file.path(out, "pred_tibq5_isig_sleep_draws.rds"))
 pred_tibq5_isig_sleep_draws <- readRDS(file.path(out, "pred_tibq5_isig_sleep_draws.rds"))
 
@@ -271,22 +272,22 @@ dev.off()
 # make individual then patch
 plot_params <- list(
   "Sleep onset latency" = list(
-    limits = c(0, 800), breaks = c(0, 800), name = "Sleep onset latency (min)", y_offset = 1.5
+    limits = c(0, 80), breaks = c(0, 80), name = "Sleep onset latency (min)", y_offset = 1.5
   ),
   "Daytime wake" = list(
-    limits = c(350, 1400), breaks = c(400, 1400), name = "Daytime wake (min)", y_offset = 1.5
+    limits = c(800, 1200), breaks = c(800, 1200), name = "Daytime wake (min)", y_offset = 1.5
   ),
   "Wake after sleep onset" = list(
-    limits = c(0, 150), breaks = c(0, 150), name = "Wake after sleep onset (min)", y_offset = 1.5
+    limits = c(40, 80), breaks = c(40, 80), name = "Wake after sleep onset (min)", y_offset = 1.5
   ),
   "Light sleep" = list(
-    limits = c(0, 350), breaks = c(0, 350), name = "Light sleep (min)", y_offset = 1.5
+    limits = c(150, 350), breaks = c(150, 350), name = "Light sleep (min)", y_offset = 1.5
   ),
   "Slow wave sleep" = list(
-    limits = c(0, 200), breaks = c(0, 200), name = "Slow wave sleep (min)", y_offset = 1.5
+    limits = c(40, 80), breaks = c(40, 80), name = "Slow wave sleep (min)", y_offset = 1.5
   ),
   "REM sleep" = list(
-    limits = c(0, 150), breaks = c(0, 150), name = "REM sleep (min)", y_offset = 1.5
+    limits = c(40, 100), breaks = c(40, 100), name = "REM sleep (min)", y_offset = 1.5
   )
 )
 
