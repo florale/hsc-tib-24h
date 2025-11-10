@@ -1,4 +1,4 @@
-source("setup.r")
+source("data.r")
 parts <- c("wake_min", "sol_min", "light_min", "stage3_min", "rem_min", "waso_min")
 
 clr_isi1_age_u45 <- complr(
@@ -10,8 +10,8 @@ clr_isi1_age_u45 <- complr(
 
 m_tib_isi1_age_u45 <- brmcoda(clr_isi1_age_u45,
   mvbind(z1_1, z2_1, z3_1, z4_1, z5_1) ~
-    s(bedrest_min) +
-    female + bmi + white + working + s(perHrAHSleep) + servicetype,
+    s(so_min) +
+    female + bmi + white + working + labpsg + s(perHrAHSleep) + antidep,
   iter = 4000, chains = 6, cores = 6, seed = 123, warmup = 1000,
   backend = "cmdstanr"
 )
@@ -27,8 +27,8 @@ clr_isi1_age_45u <- complr(
 
 m_tib_isi1_age_45u <- brmcoda(clr_isi1_age_45u,
   mvbind(z1_1, z2_1, z3_1, z4_1, z5_1) ~
-    s(bedrest_min) +
-    female + bmi + white + working + s(perHrAHSleep) + servicetype,
+    s(so_min) +
+    female + bmi + white + working + labpsg + s(perHrAHSleep) + antidep,
   iter = 4000, chains = 6, cores = 6, seed = 123, warmup = 1000,
   backend = "cmdstanr"
 )
@@ -45,13 +45,13 @@ for (age in c("age_u45", "age_45u")) {
  out_prefix <- paste0("pred_tibq5_isi1_", age)
 
  # Quantiles
- bedrest_quantiles <- quantile(model.frame(model)$bedrest_min, probs = c(0.1, 0.25, 0.5, 0.75, 0.9), na.rm = TRUE)
+ bedrest_quantiles <- quantile(model.frame(model)$so_min, probs = c(0.1, 0.25, 0.5, 0.75, 0.9), na.rm = TRUE)
  
  d_tibq5 <- emmeans::ref_grid(model$model,
-  at = list(bedrest_min = bedrest_quantiles)
+  at = list(so_min = bedrest_quantiles)
  )@grid
  d_tibq5 <- as.data.table(d_tibq5)
- d_tibq5 <- d_tibq5[!duplicated(d_tibq5[, .(bedrest_min, female, white, perHrAHSleep)]), ]
+ d_tibq5 <- d_tibq5[!duplicated(d_tibq5[, .(so_min, female, white, working, antidep, labpsg)]), ]
  
  pred_tibq5 <- fitted(model, newdata = d_tibq5, scale = "response", re_formula = NA, summary = FALSE)
  pred_tibq5 <- apply(pred_tibq5, c(1), function(x) cbind(d_tibq5, x))
@@ -60,7 +60,7 @@ for (age in c("age_u45", "age_45u")) {
   d <- as.data.table(d)
 
   setnames(d, paste0("t", parts), parts)
-  d[, tib_q := factor(bedrest_min, labels = c("q1", "q2", "q3", "q4", "q5"))]
+  d[, tib_q := factor(so_min, labels = c("q1", "q2", "q3", "q4", "q5"))]
   d[, isi_g := "isi1"]
 
   d[, tst_min := light_min + stage3_min + rem_min]
@@ -70,6 +70,20 @@ for (age in c("age_u45", "age_45u")) {
   d[, light_perc := (light_min / (light_min + stage3_min + rem_min)) * 100]
   d[, stage3_perc := (stage3_min / (light_min + stage3_min + rem_min)) * 100]
   d[, rem_perc := (rem_min / (light_min + stage3_min + rem_min)) * 100]
+
+  # calculated weighted means by .wgt. for min 
+  d[, sol_min := weighted.mean(sol_min, .wgt.), by = .(isi_g, tib_q)]
+  d[, waso_min := weighted.mean(waso_min, .wgt.), by = .(isi_g, tib_q)]
+  d[, light_min := weighted.mean(light_min, .wgt.), by = .(isi_g, tib_q)]
+  d[, stage3_min := weighted.mean(stage3_min, .wgt.), by = .(isi_g, tib_q)]
+  d[, rem_min := weighted.mean(rem_min, .wgt.), by = .(isi_g, tib_q)]
+  d[, wake_min := weighted.mean(wake_min, .wgt.), by = .(isi_g, tib_q)]
+  d[, tst_min := weighted.mean(tst_min, .wgt.), by = .(isi_g, tib_q)]
+
+  # calculated weighted means by .wgt. for all perc
+  d[, light_perc := weighted.mean(light_perc, .wgt.), by = .(isi_g, tib_q)]
+  d[, stage3_perc := weighted.mean(stage3_perc, .wgt.), by = .(isi_g, tib_q)]
+  d[, rem_perc := weighted.mean(rem_perc, .wgt.), by = .(isi_g, tib_q)]
 
   # make wide
   d <- dcast(d, . ~ isi_g + tib_q,
@@ -157,11 +171,11 @@ for (age in c("age_u45", "age_45u")) {
  
  
 pred_tibq5_sum[, tib_group := NA]
-pred_tibq5_sum[, tib_group := ifelse(grepl("isi[0:1]_q1", par), "P10 TIB", tib_group)]
-pred_tibq5_sum[, tib_group := ifelse(grepl("isi[0:1]_q2", par), "P25 TIB", tib_group)]
-pred_tibq5_sum[, tib_group := ifelse(grepl("isi[0:1]_q3", par), "P50 TIB", tib_group)]
-pred_tibq5_sum[, tib_group := ifelse(grepl("isi[0:1]_q4", par), "P75 TIB", tib_group)]
-pred_tibq5_sum[, tib_group := ifelse(grepl("isi[0:1]_q5", par), "P90 TIB", tib_group)]
+pred_tibq5_sum[, tib_group := ifelse(grepl("isi[0:1]_q1", par), "P10 SO", tib_group)]
+pred_tibq5_sum[, tib_group := ifelse(grepl("isi[0:1]_q2", par), "P25 SO", tib_group)]
+pred_tibq5_sum[, tib_group := ifelse(grepl("isi[0:1]_q3", par), "P50 SO", tib_group)]
+pred_tibq5_sum[, tib_group := ifelse(grepl("isi[0:1]_q4", par), "P75 SO", tib_group)]
+pred_tibq5_sum[, tib_group := ifelse(grepl("isi[0:1]_q5", par), "P90 SO", tib_group)]
 table(pred_tibq5_sum$tib_group, useNA = "always")
 
 pred_tibq5_sum[, contrast := NA]
@@ -199,22 +213,22 @@ pred_tibq5_isi1_age_sum <- rbind(
 # make individual then patch
 plot_min_params <- list(
   "WD" = list(
-    limits = c(500, 1500), breaks = c(800, 900, 1000), breaks2 = c(.60, .70, .80), name = "WD", y_offset = 1.5
+    limits = c(800, 1350), breaks = c(1000, 1100, 1200), breaks2 = c(.60, .70, .80), name = "WD", y_offset = 1.5
   ),
   "SOL" = list(
-    limits = c(-100, 500), breaks = c(100, 200, 300), breaks2 = c(.01, .04, .07), name = "SOL", y_offset = 1.5
+    limits = c(0, 45), breaks = c(10, 30, 50), breaks2 = c(.01, .04, .07), name = "SOL", y_offset = 1.5
   ),
   "WASO" = list(
-    limits = c(-30, 300), breaks = c(50, 100, 150), breaks2 = c(.03, .05, .07, .09), name = "WASO", y_offset = 1.5
+    limits = c(0, 155), breaks = c(25, 50, 75), breaks2 = c(.03, .05, .07, .09), name = "WASO", y_offset = 1.5
   ),
   "N1+2" = list(
-    limits = c(120, 390), breaks = c(200, 240, 280), breaks2 = c(.15, .20, .25), name = "N1+2", y_offset = 1.5
+    limits = c(130, 360), breaks = c(200, 250, 300), breaks2 = c(.15, .20, .25), name = "N1+2", y_offset = 1.5
   ),
   "N3" = list(
-    limits = c(0, 120), breaks = c(40, 60, 80), breaks2 = c(.03, .05, .07, .09), name = "N3", y_offset = 1.5
+    limits = c(20, 120), breaks = c(50, 75, 100), breaks2 = c(.03, .05, .07, .09), name = "N3", y_offset = 1.5
   ),
   "REM" = list(
-    limits = c(0, 120), breaks = c(40, 60, 80), breaks2 = c(.03, .05, .07), name = "REM", y_offset = 1.5
+    limits = c(20, 120), breaks = c(50, 75, 100), breaks2 = c(.03, .05, .07), name = "REM", y_offset = 1.5
   )
 )
 
@@ -225,44 +239,36 @@ make_min_plot <- function(part_label) {
     pred_tibq5_isi1_age_sum[!is.na(tib_group) & part_label == part & grepl("min", par) & mean == 1],
     aes(x = tib_group, y = Mean, group = age, shape = age, colour = interaction(tib_group, age), fill = interaction(tib_group, age))
   ) +
-    # geom_hline(aes(yintercept = yintercept_insom), linewidth = 0.75, linetype = "dashed", colour = "#DCD5CE") +
-    # geom_hline(aes(yintercept = yintercept_healthy), linewidth = 0.75, linetype = "dashed", colour = "#A9A9A9") +
     geom_pointrange(
       aes(
         ymin = CI_low,
         ymax = CI_high
       ),
-      size = 2,
-      linewidth = 1, 
-      position = position_dodge(width = 1)
+      size = 1.5,
+      linewidth = 0.75, 
+      position = position_dodge(width = 0.75)
       ) +
-    # geom_text(aes(y = Mean + params$y_offset, label = latex2exp::TeX(contrast_min_sig, output = "character")),
-    #   parse = TRUE,
-    #   hjust = 0.5, nudge_x = .2,
-    #   family = "Arial Narrow",
-    #   size = 7,
-    #   show.legend = FALSE
-    # ) +
-    geom_text(aes(y = max(params$limits), label = est_min),
-      hjust = 1, 
-      position = position_dodge(width = 1),
-      family = "Arial Narrow",
-      fontface = "bold",
-      size = 5,
-      show.legend = FALSE
-    ) +
     geom_text(aes(y = min(params$limits), label = tib_group),
       hjust = 0, nudge_x = 0,
       family = "Arial Narrow",
       fontface = "plain",
-      size = 5.5,
+      size = 5,
       colour = "black",
+      show.legend = FALSE
+    ) +
+    geom_text(aes(y = max(params$limits), label = est_min),
+      hjust = 1, 
+      position = position_dodge(width = 0.75),
+      family = "Arial Narrow",
+      fontface = "bold",
+      size = 5,
       show.legend = FALSE
     ) +
     scale_y_continuous(
       limits = params$limits,
       breaks = params$breaks,
       labels = paste0(params$breaks),
+      position = "right"
     ) +
     scale_colour_manual(values = col_age) +
     scale_fill_manual(values = col_age) +
@@ -278,43 +284,38 @@ make_min_plot <- function(part_label) {
       panel.grid.minor    = element_blank(),
       panel.spacing       = unit(0.5, "lines"),
       axis.title.x        = element_blank(),
-      axis.text.x         = element_text(size = 14, face = "plain", family = "Arial Narrow"),
+      axis.text.x         = element_blank(),
       axis.text.y         = element_blank(),
-      strip.text          = element_text(size = 14, face = "plain", family = "Arial Narrow", hjust = .5),
+      strip.text          = element_text(size = 16, face = "plain", family = "Arial Narrow", hjust = .5),
       axis.line.x         = element_line(linewidth = 0.5, colour = "black"),
       legend.text         = element_blank(),
       legend.position     = "none",
-      plot.margin         = unit(c(2, 1.5, 1.5, -1.75), "lines")
+      plot.margin         = unit(c(1.5, 1.5, 0, 0), "lines")
     )
 }
 plots_min <- lapply(names(plot_min_params), make_min_plot)
 names(plots_min) <- names(plot_min_params)
 
-grDevices::cairo_pdf(
-  file = file.path(out, "plot_age_min.pdf"),
-  width = 10,
-  height = 14,
-)
-ggarrange(
+plot_age_min_isi1 <- ggarrange(
   plots_min[["WD"]],
-  plots_min[["N1+2"]],
   plots_min[["SOL"]],
-  plots_min[["N3"]],
   plots_min[["WASO"]],
+  plots_min[["N1+2"]],
+  plots_min[["N3"]],
   plots_min[["REM"]],
   labels = c(
-    "  A. Wake During the Day (min)",
-    "  D. Light Sleep (min)",
-    "  B. Sleep Onset Latency (min)",
-    "  E. Slow Wave Sleep (min)",
-    "  C. Wake After Sleep Onset (min)",
-    "  F. REM Sleep (min)"
-  ), 
+    "  Wake During the Day (min)",
+    "  Sleep Onset Latency (min)",
+    "  Wake After Sleep Onset (min)",
+    "  Light Sleep (min)",
+    "  Slow Wave Sleep (min)",
+    "  REM Sleep (min)"
+  ),
   hjust = 0,
-  ncol = 2, nrow = 3, common.legend = TRUE, legend = "none",
-  font.label = list(size = 15, face = "bold", family = "Arial Narrow")
-) + theme(plot.margin = unit(c(1, 0, 0, 1), "lines"))
-dev.off()
+  ncol = 3, nrow = 2, common.legend = TRUE, legend = "none",
+  font.label = list(size = 16, face = "italic", family = "Arial Narrow")
+) + theme(plot.margin = unit(c(0, 0, 0, 0), "lines"))
+ggsave(file.path(out, paste0("plot_age_min_isi1", ".pdf")), plot_age_min_isi1, device = cairo_pdf, width = 12, height = 8, dpi = 300)
 
 ## plot_perc -----------------------
 plot_perc_params <- list(
@@ -322,13 +323,13 @@ plot_perc_params <- list(
   #   limits = c(5, 25), breaks = c(5, 10, 15, 20), name = "WASO", y_offset = 0.005
   # ),
   "N1+2" = list(
-    limits = c(40, 120), breaks = c(60, 70, 80), name = "N1+2", y_offset = 0.01
+    limits = c(50, 95), breaks = c(55, 65, 75), name = "N1+2", y_offset = 0.01
   ),
   "N3" = list(
-    limits = c(-5, 50), breaks = c(10, 15, 20), name = "N3", y_offset = 0.005
+    limits = c(5, 40), breaks = c(15, 25, 35), name = "N3", y_offset = 0.005
   ),
   "REM" = list(
-    limits = c(-5, 50), breaks = c(10, 15, 20), name = "REM", y_offset = 0.005
+    limits = c(5, 40), breaks = c(15, 25, 35), name = "REM", y_offset = 0.005
   )
 )
 make_perc_plot <- function(part_label) {
@@ -338,44 +339,36 @@ make_perc_plot <- function(part_label) {
     pred_tibq5_isi1_age_sum[!is.na(tib_group) & part_label == part & grepl("perc", par) & mean == 1],
     aes(x = tib_group, y = Mean, group = age, shape = age, colour = interaction(tib_group, age))
   ) +
-    # geom_hline(aes(yintercept = yintercept_insom), linewidth = 0.75, linetype = "dashed", colour = "#DCD5CE") +
-    # geom_hline(aes(yintercept = yintercept_healthy), linewidth = 0.75, linetype = "dashed", colour = "#A9A9A9") +
     geom_pointrange(
       aes(
         ymin = CI_low,
         ymax = CI_high
       ),
-      size = 2,
-      linewidth = 1, 
-      position = position_dodge(width = 1)
-    ) +
-    # geom_text(aes(y = Mean + params$y_offset, label = latex2exp::TeX(contrast_perc_sig, output = "character")),
-    #   parse = TRUE,
-    #   hjust = 0.5, nudge_x = .2,
-    #   family = "Arial Narrow",
-    #   size = 7,
-    #   show.legend = FALSE
-    # ) +
-    geom_text(aes(y = max(params$limits), label = est_perc),
-      hjust = 1,
-      position = position_dodge(width = 1),
-      family = "Arial Narrow",
-      fontface = "bold",
-      size = 5,
-      show.legend = FALSE
+      size = 1.5,
+      linewidth = 0.75, 
+      position = position_dodge(width = 0.75)
     ) +
     geom_text(aes(y = min(params$limits), label = tib_group),
       hjust = 0, nudge_x = 0,
       family = "Arial Narrow",
       fontface = "plain",
-      size = 5.5,
+      size = 5,
       colour = "black",
+      show.legend = FALSE
+    ) +
+    geom_text(aes(y = max(params$limits), label = est_perc),
+      hjust = 1,
+      position = position_dodge(width = 0.75),
+      family = "Arial Narrow",
+      fontface = "bold",
+      size = 5,
       show.legend = FALSE
     ) +
     scale_y_continuous(
       limits = params$limits,
       breaks = params$breaks,
       labels = paste0(params$breaks),
+      position = "right"
     ) +
     scale_colour_manual(values = col_age) +
     # scale_fill_manual(values = col_age) +
@@ -391,77 +384,59 @@ make_perc_plot <- function(part_label) {
       panel.grid.minor    = element_blank(),
       panel.spacing       = unit(0.5, "lines"),
       axis.title.x        = element_blank(),
-      axis.text.x         = element_text(size = 14, face = "plain", family = "Arial Narrow"),
+      axis.text.x         = element_blank(),
       axis.text.y         = element_blank(),
-      strip.text          = element_text(size = 14, face = "plain", family = "Arial Narrow", hjust = .5),
+      strip.text          = element_text(size = 16, face = "plain", family = "Arial Narrow", hjust = .5),
       axis.line.x         = element_line(linewidth = 0.5, colour = "black"),
+      # axis.line.x         = element_blank(),
       legend.text         = element_blank(),
       legend.position     = "none",
-      plot.margin         = unit(c(2, 1.5, 1.5, -1.75), "lines")
+      plot.margin         = unit(c(1.5, 1.5, 0, 0), "lines")
     )
 }
 plots_perc <- lapply(names(plot_perc_params), make_perc_plot)
 names(plots_perc) <- names(plot_perc_params)
 
-grDevices::cairo_pdf(
-  file = file.path(out, "plot_age_perc.pdf"),
-  width = 5,
-  height = 14,
-)
-ggarrange(
+plot_age_perc_isi1 <- ggarrange(
   # plots_perc[["WASO"]],
   plots_perc[["N1+2"]],
   plots_perc[["N3"]],
   plots_perc[["REM"]],
   labels = c(
     # "  A. Wake After Sleep Onset (%)",
-    "  A. Light Sleep (%)",
-    "  B. Slow Wave Sleep (%)",
-    "  C. REM Sleep (%)"
+    "  Light Sleep (%)",
+    "  Slow Wave Sleep (%)",
+    "  REM Sleep (%)"
   ),
   hjust = 0,
-  ncol = 1, nrow = 3, common.legend = TRUE, legend = "none",
-  font.label = list(size = 15, face = "bold", family = "Arial Narrow")
-) + theme(plot.margin = unit(c(1, 0, 0, 1), "lines"))
-dev.off()
+  ncol = 3, nrow = 1, common.legend = TRUE, legend = "none",
+  font.label = list(size = 16, face = "italic", family = "Arial Narrow")
+) + theme(plot.margin = unit(c(0, 0, 0, 0), "lines"))
+ggsave(file.path(out, paste0("plot_age_perc_isi1", ".pdf")), plot_age_perc_isi1, device = cairo_pdf, width = 12, height = 4, dpi = 300)
 
-# combined plot ------------------------
-grDevices::cairo_pdf(
-  file = file.path(out, "plot_age_combined.pdf"),
-  width = 13,
-  height = 13,
-)
-ggarrange(
-  plots_min[["WD"]],
-  plots_min[["N1+2"]],
-  plots_perc[["N1+2"]],
+# patch into one figure -----------------------------------------------
+subtitle_plot <- function(label, margin_cm = c(0, 0, 2, 0)) {
+  ggplot() +
+    labs(title = label) +
+    theme_void() +
+    theme(
+      plot.title  = element_text(
+        family = "Arial Narrow",
+        face   = "bold",
+        size   = 16,
+        hjust  = 0      # 0 = left, 0.5 = centre, 1 = right
+      )
+    )
+}
 
-  plots_min[["SOL"]],
-  plots_min[["N3"]],
-  plots_perc[["N3"]],
+plot_age_min_perc_isi1 <-
+  subtitle_plot(" A. 24h Sleep-Wake Architecture Composition") / plot_age_min_isi1 /
+  subtitle_plot(" B. Sleep Architecture Composition") / plot_age_perc_isi1 +
+  plot_layout(heights = c(0, 2, 0, 1))
+ggsave(file.path(out, paste0("plot_age_min_perc_isi1", ".pdf")), plot_age_min_perc_isi1, device = cairo_pdf, width = 12, height = 12, dpi = 300)
+ggsave(file.path(out, paste0("plot_age_min_perc_isi1", ".png")), plot_age_min_perc_isi1, device = cairo_pdf, width = 12, height = 12, dpi = 300)
 
-  plots_min[["WASO"]],
-  plots_min[["REM"]],
-  plots_perc[["REM"]],
-
-  labels = c(
-    "  A. WD (min)",
-    "  D. N1+2 (min)",
-    "  G. N1+2 (%)",
-
-    "  B. SOL (min)",
-    "  E. N3 (min)",
-    "  H. N3 (%)",
-
-    "  C. WASO (min)",
-    "  F. REM (min)",
-    "  I. REM (%)"
-  ),
-  hjust = 0,
-  ncol = 3, nrow = 3, common.legend = TRUE, legend = "none",
-  font.label = list(size = 15, face = "bold", family = "Arial Narrow")
-) + theme(plot.margin = unit(c(1, 0, 0, 1), "lines"))
-dev.off()
+saveRDS(plot_age_min_perc_isi1, file.path(out, paste0("plot_age_min_perc_isi1", ".rds")))
 
 # table -----------------------------------------------
 pred_tibq5_isi1_age_sum[grepl("q1_q234", par)][, .(age, par, est_min)]
