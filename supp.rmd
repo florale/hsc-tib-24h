@@ -37,8 +37,6 @@ knitr::opts_chunk$set(
 )
 ```
 
-*Notes* Short SO (P10), Medium SO (P25–P75 average), Long SO (P90). Bottom row is reference group; positive values indicate more time compared to reference and negative values indicate less. Percentages are relative to total sleep time. WD = wake during the day. SOL = sleep onset latency. N1+2 = NREM sleep stages 1 and 2 combined. N3 = NREM sleep stage 3. REM = rapid-eye-movement sleep. WASO = wake after sleep onset. SO = sleep opportunity.
-
 ## Main analysis
 ### Diagnostics
 #### Rhat
@@ -75,24 +73,27 @@ pp_plots <- lapply(c("z11", "z21", "z31", "z41", "z51"), function(i) {
 wrap_plots(pp_plots, nrow = 1)
 ```
 
-### Main model summary
+### Model summary
 
 ```{r, warning=FALSE}
 summary(m_tib_isi1)
 ```
 
 ### Estimated 24h sleep-wake architecture composition by sleep opportunity
+
+*Notes*. Short SO (P10), Medium SO (P25–P75 average), Long SO (P90). Bottom row is reference group; positive values indicate more time compared to reference and negative values indicate less. Percentages are relative to total sleep time. WD = wake during the day. SOL = sleep onset latency. N1+2 = NREM sleep stages 1 and 2 combined. N3 = NREM sleep stage 3. REM = rapid-eye-movement sleep. WASO = wake after sleep onset. SO = sleep opportunity.
+
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, out.width="110%"}
 knitr::include_graphics(plot_min_perc_isi1)
 ```
 
 ```{r, warning=FALSE, echo=FALSE}
-kbl(sup_tibq5_isi1_sum, espacce = F) %>%
+kbl(sup_tibq5_isi1_sum, escape = F) %>%
   kable_styling(bootstrap_options = c("hover", "condensed"), fixed_thead = T) %>%
   row_spec(0, color = "#4F5D5B", background = "#ffffff")
 ```
 
-## Stratified analysis
+## Moderation analysis
 ### Estimated 24h sleep-wake architecture composition by sleep opportunity
 #### By Sex
 
@@ -107,8 +108,18 @@ cat(
 knitr::include_graphics(plot_sex_min_perc_isi1)
 ```
 
+**Differences between sleep opportunity groups by sex**
+  
 ```{r, warning=FALSE, echo=FALSE}
-kbl(sup_tibq5_isi1_sex_sum, espacce = F) %>%
+kbl(sup_tibq5_isi1_sex_sum, escape = F) %>%
+  kable_styling(bootstrap_options = c("hover", "condensed"), fixed_thead = T) %>%
+  row_spec(0, color = "#4F5D5B", background = "#ffffff")
+```
+
+**Differences between females and males**
+
+```{r, warning=FALSE, echo=FALSE}
+kbl(sup_tibq5_isi1_sex_dif, escape = F) %>%
   kable_styling(bootstrap_options = c("hover", "condensed"), fixed_thead = T) %>%
   row_spec(0, color = "#4F5D5B", background = "#ffffff")
 ```
@@ -126,12 +137,21 @@ cat(
 knitr::include_graphics(plot_age_min_perc_isi1)
 ```
 
+**Differences between sleep opportunity groups by age**
+
 ```{r, warning=FALSE, echo=FALSE}
-kbl(sup_tibq5_isi1_age_sum, espacce = F) %>%
+kbl(sup_tibq5_isi1_age_sum, escape = F) %>%
   kable_styling(bootstrap_options = c("hover", "condensed"), fixed_thead = T) %>%
   row_spec(0, color = "#4F5D5B", background = "#ffffff")
 ```
 
+**Differences between age**
+
+```{r, warning=FALSE, echo=FALSE}
+kbl(sup_tibq5_isi1_age_dif, escape = F) %>%
+  kable_styling(bootstrap_options = c("hover", "condensed"), fixed_thead = T) %>%
+  row_spec(0, color = "#4F5D5B", background = "#ffffff")
+```
 #### By PSG type
 
 ```{r, echo=FALSE, results='asis'}
@@ -145,8 +165,19 @@ cat(
 knitr::include_graphics(plot_serv_min_perc_isi1)
 ```
 
+**Differences between sleep opportunity groups by PSG type**
+
 ```{r, warning=FALSE, echo=FALSE}
-kbl(sup_tibq5_isi1_serv_sum, espacce = F) %>%
+kbl(sup_tibq5_isi1_serv_sum, escape = F) %>%
+  kable_styling(bootstrap_options = c("hover", "condensed"), fixed_thead = T) %>%
+  row_spec(0, color = "#4F5D5B", background = "#ffffff")
+```
+
+**Differences between PSG type**
+
+
+```{r, warning=FALSE, echo=FALSE}
+kbl(sup_tibq5_isi1_serv_dif, escape = F) %>%
   kable_styling(bootstrap_options = c("hover", "condensed"), fixed_thead = T) %>%
   row_spec(0, color = "#4F5D5B", background = "#ffffff")
 ```
