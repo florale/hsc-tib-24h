@@ -1,12 +1,12 @@
 
-base <- paste0("/Users/", Sys.info()[["user"]], "/Library/CloudStorage/OneDrive-Personal/monash/projects/healthy-sleep-clinic/data")
-out <- paste0("/Users/", Sys.info()[["user"]], "/Library/CloudStorage/OneDrive-Personal/monash/projects/healthy-sleep-clinic/hsc-tib-24h/output")
+base <- paste0("/Users/", Sys.info()[["user"]], "/Library/CloudStorage/OneDrive-Personal/monash/papers/healthy-sleep-clinic/data")
+out <- paste0("/Users/", Sys.info()[["user"]], "/Library/CloudStorage/OneDrive-Personal/monash/papers/healthy-sleep-clinic/hsc-tib-24h/output")
 redir <- paste0("/Users/", Sys.info()[["user"]], "/Library/CloudStorage/OneDrive-Personal/github/projects/hsc/")
 source(paste0(redir, "setup.r"))
 
-scales::show_col(tvthemes:::hilda_palette$Day)
-scales::show_col(tvthemes:::hilda_palette$Night)
-scales::show_col(tvthemes:::hilda_palette$Dusk)
+# scales::show_col(tvthemes:::hilda_palette$Day)
+# scales::show_col(tvthemes:::hilda_palette$Night)
+# scales::show_col(tvthemes:::hilda_palette$Dusk)
 library(extrafont)
 library(colorspace)
 col <- c(
@@ -110,9 +110,9 @@ protan <- dichromat::dichromat(col, type = "protan")
 deutan <- dichromat::dichromat(col, type = "deutan")
 tritan <- dichromat::dichromat(col, type = "tritan")
 
-# plot for comparison
-layout(matrix(1:4, nrow = 4)); par(mar = rep(1, 4))
-recolorize::plotColorPalette(col, main = "Trichromacy")
-recolorize::plotColorPalette(protan, main = "Protanopia")
-recolorize::plotColorPalette(deutan, main = "Deutanopia")
-recolorize::plotColorPalette(tritan, main = "Tritanopia")
+# # plot for comparison
+# layout(matrix(1:4, nrow = 4)); par(mar = rep(1, 4))
+# recolorize::plotColorPalette(col, main = "Trichromacy")
+# recolorize::plotColorPalette(protan, main = "Protanopia")
+# recolorize::plotColorPalette(deutan, main = "Deutanopia")
+# recolorize::plotColorPalette(tritan, main = "Tritanopia")

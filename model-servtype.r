@@ -10,6 +10,7 @@ clr_isi1 <- complr(
   # idvar = "record_id",
   total = 1440
 )
+clr_isi1$dataout[, so_min := 1440 - twake_min]
 
 m_tib_isi1_serv <- brmcoda(clr_isi1,
   mvbind(z1_1, z2_1, z3_1, z4_1, z5_1) ~

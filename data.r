@@ -12,6 +12,8 @@ clr <- complr(
 
 colnames(clr$dataout)
 clr$dataout[, age45 := ifelse(age >= 45, 1, 0)]
+clr$dataout[, so_min := 1440 - twake_min]
+clr$dataout[, tst_min := tlight_min + tstage3_min + trem_min]
 
 # descriptive table
 tmp <- clr$dataout
@@ -38,8 +40,10 @@ vars_for_range <- c(
 range_summary <- rbindlist(lapply(vars_for_range, function(var) {
   values <- clr$dataout[[var]]
 
-  data.table(
+data.table(
     variable = var,
+    mean = mean(values, na.rm = TRUE),
+    sd = sd(values, na.rm = TRUE),
     min = min(values, na.rm = TRUE),
     max = max(values, na.rm = TRUE),
     completeness = nrow(clr$dataout[!is.na(get(var))])
@@ -47,19 +51,23 @@ range_summary <- rbindlist(lapply(vars_for_range, function(var) {
 }))
 
 setorder(range_summary, variable)
-range_summary[, range := paste0(round(min, digits = 2), " - ", round(max, digits = 2))]
+range_summary[, msd := paste0(round(mean, digits = 0), " (", round(sd, digits = 0), ")")]
+range_summary[, range := paste0(round(min, digits = 0), " - ", round(max, digits = 0))]
 range_summary[, completeness := completeness]
-print(range_summary[, .(variable, range, completeness)])
+print(range_summary[, .(variable, msd, range, completeness)])
 nrow(clr$dataout[!is.na(coupled)])
 
 egltable(c(
  "age", "sex", "bmi",
- "working", "white", "coupled", "labpsg",
+ "working", "white", "ethnicity", "coupled", "labpsg", "educ", "antidep",
+ "income3cat",
  "perHrAHSleep",
  "isi",
  "twake_min", "tsol_min", "tlight_min", "tstage3_min", "trem_min", 
  "twaso_min", "tst_min", "spt_min", "so_min"
 ), data = tmp)
+
+quantile(tmp$so_min, probs = c(0.1, 0.25, 0.5, 0.75, 0.9), na.rm = TRUE)
 
 # plot histogram of so_min by tib_group
 

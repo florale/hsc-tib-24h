@@ -8,12 +8,15 @@ clr_isi1 <- complr(
   total = 1440
 )
 
+clr_isi1$dataout[, so_min := 1440 - twake_min]
+
 m_tib_isi1 <- brmcoda(clr_isi1,
   mvbind(z1_1, z2_1, z3_1, z4_1, z5_1) ~
     s(so_min) +
     s(age) + female + bmi + white + working + labpsg + s(perHrAHSleep) + antidep,
   iter = 4000, chains = 6, cores = 6, seed = 123, warmup = 1000,
-  backend = "cmdstanr"
+  backend = "cmdstanr",
+  control = list(adapt_delta = 0.95)
 )
 summary(m_tib_isi1)
 saveRDS(m_tib_isi1, file.path(out, "m_tib_isi1.rds"))
@@ -85,17 +88,17 @@ pred_tibq5_isi1_draws <- lapply(pred_tibq5_isi1, function(d) {
     ]
   }
 
-  # means across quartiles
-  for (part in c("sol", "waso", "light", "stage3", "rem", "wake", "tst")) {
-    d[, paste0(part, "_min_", "isi1") := rowMeans(.SD, na.rm = TRUE),
-      .SDcols = paste0(part, "_min_", "isi1", "_q", 1:5)
-    ]
-  }
-  for (part in c("light", "stage3", "rem")) {
-    d[, paste0(part, "_perc_", "isi1") := rowMeans(.SD, na.rm = TRUE),
-      .SDcols = paste0(part, "_perc_", "isi1", "_q", 1:5)
-    ]
-  }
+  # # means across quartiles
+  # for (part in c("sol", "waso", "light", "stage3", "rem", "wake", "tst")) {
+  #   d[, paste0(part, "_min_", "isi1") := rowMeans(.SD, na.rm = TRUE),
+  #     .SDcols = paste0(part, "_min_", "isi1", "_q", 1:5)
+  #   ]
+  # }
+  # for (part in c("light", "stage3", "rem")) {
+  #   d[, paste0(part, "_perc_", "isi1") := rowMeans(.SD, na.rm = TRUE),
+  #     .SDcols = paste0(part, "_perc_", "isi1", "_q", 1:5)
+  #   ]
+  # }
 
   # difference between isi1, q1 vs q234
   for (part in c("sol", "waso", "light", "stage3", "rem", "wake", "tst")) {
@@ -188,22 +191,23 @@ pred_tibq5_isi1_sum[grepl("min", par) & !grepl("perc", par), est_min := paste0(r
 pred_tibq5_isi1_sum[grepl("perc", par), est_perc := paste0(format(round(Mean, 2), nsmall = 2), " [", format(round(CI_low, 2), nsmall = 2), ", ", format(round(CI_high, 2), nsmall = 2), "]")]
 
 saveRDS(pred_tibq5_isi1_sum, file.path(out, "pred_tibq5_isi1_sum.rds"))
+pred_tibq5_isi1_sum <- readRDS(file.path(out, "pred_tibq5_isi1_sum.rds"))
 
 ### plot -----------------------
 ## plot_min -----------------------
 # make individual then patch
 plot_min_params <- list(
   "WD" = list(
-    limits = c(850, 1300), breaks = c(1000, 1100, 1200), breaks2 = c(.60, .70, .80), name = "WD", y_offset = 1.5
+    limits = c(830, 1300), breaks = c(1000, 1100, 1200), breaks2 = c(.60, .70, .80), name = "WD", y_offset = 1.5
   ),
   "SOL" = list(
-    limits = c(0, 40), breaks = c(10, 30, 50), breaks2 = c(.01, .04, .07), name = "SOL", y_offset = 1.5
+    limits = c(0, 50), breaks = c(10, 30, 50), breaks2 = c(.01, .04, .07), name = "SOL", y_offset = 1.5
   ),
   "WASO" = list(
-    limits = c(10, 110), breaks = c(25, 50, 75), breaks2 = c(.03, .05, .07, .09), name = "WASO", y_offset = 1.5
+    limits = c(10, 120), breaks = c(25, 50, 75), breaks2 = c(.03, .05, .07, .09), name = "WASO", y_offset = 1.5
   ),
   "N1+2" = list(
-    limits = c(140, 350), breaks = c(200, 250, 300), breaks2 = c(.15, .20, .25), name = "N1+2", y_offset = 1.5
+    limits = c(140, 370), breaks = c(200, 250, 300), breaks2 = c(.15, .20, .25), name = "N1+2", y_offset = 1.5
   ),
   "N3" = list(
     limits = c(20, 100), breaks = c(50, 75, 100), breaks2 = c(.03, .05, .07, .09), name = "N3", y_offset = 1.5
@@ -417,8 +421,3 @@ plot_min_perc_isi1 <-
   plot_layout(heights = c(0, 2, 0, 1))
 ggsave(file.path(out, paste0("plot_min_perc_isi1", ".pdf")), plot_min_perc_isi1, device = cairo_pdf, width = 12, height = 12, dpi = 300)
 ggsave(file.path(out, paste0("plot_min_perc_isi1", ".png")), plot_min_perc_isi1, device = "png", width = 12, height = 12, dpi = 300)
-
-# table -----------------------------------------------
-pred_tibq5_isi1_sum[grepl("q1_q5", par)][, est := paste0(round(Mean, 1), "[", round(CI_low, 1), ", ", round(CI_high, 1), "]")][, .(par, est)]
-pred_tibq5_isi1_sum[grepl("q1_q234", par)][, est := paste0(round(Mean, 1), "[", round(CI_low, 1), ", ", round(CI_high, 1), "]")][, .(par, est)]
-pred_tibq5_isi1_sum[grepl("q5_q234", par)][, est := paste0(round(Mean, 1), "[", round(CI_low, 1), ", ", round(CI_high, 1), "]")][, .(par, est)]
