@@ -198,7 +198,7 @@ pred_tibq5_isi1_sum <- readRDS(file.path(out, "pred_tibq5_isi1_sum.rds"))
 # make individual then patch
 plot_min_params <- list(
   "WD" = list(
-    limits = c(830, 1300), breaks = c(1000, 1100, 1200), breaks2 = c(.60, .70, .80), name = "WD", y_offset = 1.5
+    limits = c(800, 1350), breaks = c(1000, 1100, 1200), breaks2 = c(.60, .70, .80), name = "WD", y_offset = 1.5
   ),
   "SOL" = list(
     limits = c(0, 50), breaks = c(10, 30, 50), breaks2 = c(.01, .04, .07), name = "SOL", y_offset = 1.5
@@ -207,7 +207,7 @@ plot_min_params <- list(
     limits = c(10, 120), breaks = c(25, 50, 75), breaks2 = c(.03, .05, .07, .09), name = "WASO", y_offset = 1.5
   ),
   "N1+2" = list(
-    limits = c(140, 370), breaks = c(200, 250, 300), breaks2 = c(.15, .20, .25), name = "N1+2", y_offset = 1.5
+    limits = c(130, 390), breaks = c(200, 250, 300), breaks2 = c(.15, .20, .25), name = "N1+2", y_offset = 1.5
   ),
   "N3" = list(
     limits = c(20, 100), breaks = c(50, 75, 100), breaks2 = c(.03, .05, .07, .09), name = "N3", y_offset = 1.5
@@ -293,9 +293,9 @@ plot_min_isi1 <- ggarrange(
     "  Wake During the Day (min)",
     "  Sleep Onset Latency (min)",
     "  Wake After Sleep Onset (min)",
-    "  Light Sleep (min)",
-    "  Slow Wave Sleep (min)",
-    "  REM Sleep (min)"
+    "  N1+2 (min)",
+    "  N3 (min)",
+    "  REM (min)"
   ),
   hjust = 0,
   ncol = 3, nrow = 2, common.legend = TRUE, legend = "none",
@@ -390,9 +390,9 @@ plot_perc_isi1 <- ggarrange(
   plots_perc[["REM"]],
   labels = c(
     # "  A. Wake After Sleep Onset (%)",
-    "  Light Sleep (%)",
-    "  Slow Wave Sleep (%)",
-    "  REM Sleep (%)"
+    "  N1+2 (%)",
+    "  N3 (%)",
+    "  REM (%)"
   ),
   hjust = 0,
   ncol = 3, nrow = 1, common.legend = TRUE, legend = "none",
@@ -419,5 +419,5 @@ plot_min_perc_isi1 <-
   subtitle_plot(" A. 24h Sleep-Wake Architecture Composition") / plot_min_isi1 /
   subtitle_plot(" B. Sleep Architecture Composition") / plot_perc_isi1 +
   plot_layout(heights = c(0, 2, 0, 1))
-ggsave(file.path(out, paste0("plot_min_perc_isi1", ".pdf")), plot_min_perc_isi1, device = cairo_pdf, width = 12, height = 12, dpi = 300)
-ggsave(file.path(out, paste0("plot_min_perc_isi1", ".png")), plot_min_perc_isi1, device = "png", width = 12, height = 12, dpi = 300)
+ggsave(file.path(out, paste0("plot_min_perc_isi1", ".pdf")), plot_min_perc_isi1, device = cairo_pdf, width = 11, height = 11, dpi = 300, limitsize = FALSE)
+ggsave(file.path(out, paste0("plot_min_perc_isi1", ".png")), plot_min_perc_isi1, device = "png", width = 11, height = 11, dpi = 300)

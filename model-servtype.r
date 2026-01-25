@@ -265,6 +265,7 @@ make_min_plot <- function(part_label) {
       limits = params$limits,
       breaks = params$breaks,
       labels = paste0(params$breaks),
+      position = "right"
     ) +
     scale_colour_manual(values = col_serv) +
     scale_fill_manual(values = col_serv) +
@@ -304,9 +305,9 @@ plot_serv_min_isi1 <- ggarrange(
     "  Wake During the Day (min)",
     "  Sleep Onset Latency (min)",
     "  Wake After Sleep Onset (min)",
-    "  Light Sleep (min)",
-    "  Slow Wave Sleep (min)",
-    "  REM Sleep (min)"
+    "  N1+2 (min)",
+    "  N3 (min)",
+    "  REM (min)"
   ),
   hjust = 0,
   ncol = 3, nrow = 2, common.legend = TRUE, legend = "none",
@@ -403,9 +404,9 @@ plot_serv_perc_isi1 <- ggarrange(
   plots_perc[["REM"]],
   labels = c(
     # "  A. Wake After Sleep Onset (%)",
-    "  Light Sleep (%)",
-    "  Slow Wave Sleep (%)",
-    "  REM Sleep (%)"
+    "  N1+2 (%)",
+    "  N3 (%)",
+    "  REM (%)"
   ),
   hjust = 0,
   ncol = 3, nrow = 1, common.legend = TRUE, legend = "none",
@@ -744,9 +745,9 @@ saveRDS(plot_serv_min_perc_isi1, file.path(out, paste0("plot_serv_min_perc_isi1"
 #     "  Wake During the Day (min)",
 #     "  Sleep Onset Latency (min)",
 #     "  Wake After Sleep Onset (min)",
-#     "  Light Sleep (min)",
-#     "  Slow Wave Sleep (min)",
-#     "  REM Sleep (min)"
+#     "  N1+2 (min)",
+#     "  N3 (min)",
+#     "  REM (min)"
 #   ),
 #   hjust = 0,
 #   ncol = 3, nrow = 2, common.legend = TRUE, legend = "none",
@@ -843,9 +844,9 @@ saveRDS(plot_serv_min_perc_isi1, file.path(out, paste0("plot_serv_min_perc_isi1"
 #   plots_perc[["REM"]],
 #   labels = c(
 #     # "  A. Wake After Sleep Onset (%)",
-#     "  Light Sleep (%)",
-#     "  Slow Wave Sleep (%)",
-#     "  REM Sleep (%)"
+#     "  N1+2 (%)",
+#     "  N3 (%)",
+#     "  REM (%)"
 #   ),
 #   hjust = 0,
 #   ncol = 3, nrow = 1, common.legend = TRUE, legend = "none",
