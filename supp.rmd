@@ -181,3 +181,17 @@ kbl(sup_tibq5_isi1_serv_dif, escape = F) %>%
   kable_styling(bootstrap_options = c("hover", "condensed"), fixed_thead = T) %>%
   row_spec(0, color = "#4F5D5B", background = "#ffffff")
 ```
+
+## Sensitivity analysis (with ISI cut-off of 11)
+
+*Notes*. Short SO (P10), Medium SO (P25–P75 average), Long SO (P90). Bottom row is reference group; positive values indicate more time compared to reference and negative values indicate less. Percentages are relative to total sleep time. WD = wake during the day. SOL = sleep onset latency. N1+2 = NREM sleep stages 1 and 2 combined. N3 = NREM sleep stage 3. REM = rapid-eye-movement sleep. WASO = wake after sleep onset. SO = sleep opportunity.
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, out.width="110%"}
+knitr::include_graphics(plot_min_perc_isi1_11c)
+```
+
+```{r, warning=FALSE, echo=FALSE}
+kbl(sup_tibq5_isi1_11c_sum, escape = F) %>%
+  kable_styling(bootstrap_options = c("hover", "condensed"), fixed_thead = T) %>%
+  row_spec(0, color = "#4F5D5B", background = "#ffffff")
+```
