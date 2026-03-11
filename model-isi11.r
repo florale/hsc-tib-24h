@@ -1,16 +1,16 @@
 source("data.r")
 parts <- c("wake_min", "sol_min", "light_min", "stage3_min", "rem_min", "waso_min")
 
-clr_isi1_11c <- complr(
+clr_isi11 <- complr(
   data = dpsg[isi > 10],
   parts = parts,
   # idvar = "record_id",
   total = 1440
 )
 
-clr_isi1_11c$dataout[, so_min := 1440 - twake_min]
+clr_isi11$dataout[, so_min := 1440 - twake_min]
 
-m_tib_isi1_11c <- brmcoda(clr_isi1_11c,
+m_tib_isi11 <- brmcoda(clr_isi11,
   mvbind(z1_1, z2_1, z3_1, z4_1, z5_1) ~
     s(so_min) +
     s(age) + female + bmi + white + working + labpsg + s(perHrAHSleep) + antidep,
@@ -18,31 +18,31 @@ m_tib_isi1_11c <- brmcoda(clr_isi1_11c,
   backend = "cmdstanr",
   control = list(adapt_delta = 0.95)
 )
-summary(m_tib_isi1_11c)
-saveRDS(m_tib_isi1_11c, file.path(out, "m_tib_isi1_11c.rds"))
+summary(m_tib_isi11)
+saveRDS(m_tib_isi11, file.path(out, "m_tib_isi11.rds"))
 
-m_tib_isi1_11c <- readRDS(file.path(out, "m_tib_isi1_11c.rds"))
+m_tib_isi11 <- readRDS(file.path(out, "m_tib_isi11.rds"))
 
 ## 5 quartiles -----------------------
-quantile(model.frame(m_tib_isi1_11c)$so_min, probs = c(0.1, 0.25, 0.5, 0.75, 0.9), na.rm = TRUE)
+quantile(model.frame(m_tib_isi11)$so_min, probs = c(0.1, 0.25, 0.5, 0.75, 0.9), na.rm = TRUE)
 
-d_tibq5_isi1_11c <- emmeans::ref_grid(m_tib_isi1_11c$model,
+d_tib_isi11 <- emmeans::ref_grid(m_tib_isi11$model,
   at = list(
-    so_min = quantile(model.frame(m_tib_isi1_11c)$so_min, probs = c(0.1, 0.25, 0.5, 0.75, 0.9), na.rm = TRUE)
+    so_min = quantile(model.frame(m_tib_isi11)$so_min, probs = c(0.1, 0.25, 0.5, 0.75, 0.9), na.rm = TRUE)
   )
 )@grid
-d_tibq5_isi1_11c <- as.data.table(d_tibq5_isi1_11c)
-d_tibq5_isi1_11c <- d_tibq5_isi1_11c[!duplicated(d_tibq5_isi1_11c[, .(so_min, age, female, white, working, antidep, labpsg)]), ]
+d_tib_isi11 <- as.data.table(d_tib_isi11)
+d_tib_isi11 <- d_tib_isi11[!duplicated(d_tib_isi11[, .(so_min, age, female, white, working, antidep, labpsg)]), ]
 
-pred_tibq5_isi1_11c <- fitted(m_tib_isi1_11c, newdata = d_tibq5_isi1_11c, scale = "response", re_formula = NA, summary = FALSE)
-pred_tibq5_isi1_11c <- apply(pred_tibq5_isi1_11c, c(1), function(x) cbind(d_tibq5_isi1_11c, x))
+pred_tib_isi11 <- fitted(m_tib_isi11, newdata = d_tib_isi11, scale = "response", re_formula = NA, summary = FALSE)
+pred_tib_isi11 <- apply(pred_tib_isi11, c(1), function(x) cbind(d_tib_isi11, x))
 
-pred_tibq5_isi1_11c_draws <- lapply(pred_tibq5_isi1_11c, function(d) {
+pred_tib_isi11_draws <- lapply(pred_tib_isi11, function(d) {
   d <- as.data.table(d)
 
   setnames(d, paste0("t", parts), parts)
-  d[, tib_q := factor(so_min, labels = c("q1", "q2", "q3", "q4", "q5"))]
-  d[, isi_g := "isi1"]
+  d[, tib_p := factor(so_min, labels = c("p10", "p25", "p50", "p75", "p90"))]
+  d[, isi_g := "isi11"]
 
   d[, tst_min := light_min + stage3_min + rem_min]
   # cal perc
@@ -53,21 +53,21 @@ pred_tibq5_isi1_11c_draws <- lapply(pred_tibq5_isi1_11c, function(d) {
   d[, rem_perc := (rem_min / (light_min + stage3_min + rem_min)) * 100]
 
   # calculated weighted means by .wgt. for min
-  d[, sol_min := weighted.mean(sol_min, .wgt.), by = .(isi_g, tib_q)]
-  d[, waso_min := weighted.mean(waso_min, .wgt.), by = .(isi_g, tib_q)]
-  d[, light_min := weighted.mean(light_min, .wgt.), by = .(isi_g, tib_q)]
-  d[, stage3_min := weighted.mean(stage3_min, .wgt.), by = .(isi_g, tib_q)]
-  d[, rem_min := weighted.mean(rem_min, .wgt.), by = .(isi_g, tib_q)]
-  d[, wake_min := weighted.mean(wake_min, .wgt.), by = .(isi_g, tib_q)]
-  d[, tst_min := weighted.mean(tst_min, .wgt.), by = .(isi_g, tib_q)]
+  d[, sol_min := weighted.mean(sol_min, .wgt.), by = .(isi_g, tib_p)]
+  d[, waso_min := weighted.mean(waso_min, .wgt.), by = .(isi_g, tib_p)]
+  d[, light_min := weighted.mean(light_min, .wgt.), by = .(isi_g, tib_p)]
+  d[, stage3_min := weighted.mean(stage3_min, .wgt.), by = .(isi_g, tib_p)]
+  d[, rem_min := weighted.mean(rem_min, .wgt.), by = .(isi_g, tib_p)]
+  d[, wake_min := weighted.mean(wake_min, .wgt.), by = .(isi_g, tib_p)]
+  d[, tst_min := weighted.mean(tst_min, .wgt.), by = .(isi_g, tib_p)]
 
   # calculated weighted means by .wgt. for all perc
-  d[, light_perc := weighted.mean(light_perc, .wgt.), by = .(isi_g, tib_q)]
-  d[, stage3_perc := weighted.mean(stage3_perc, .wgt.), by = .(isi_g, tib_q)]
-  d[, rem_perc := weighted.mean(rem_perc, .wgt.), by = .(isi_g, tib_q)]
+  d[, light_perc := weighted.mean(light_perc, .wgt.), by = .(isi_g, tib_p)]
+  d[, stage3_perc := weighted.mean(stage3_perc, .wgt.), by = .(isi_g, tib_p)]
+  d[, rem_perc := weighted.mean(rem_perc, .wgt.), by = .(isi_g, tib_p)]
 
   # make wide
-  d <- dcast(d, . ~ isi_g + tib_q,
+  d <- dcast(d, . ~ isi_g + tib_p,
     fun.aggregate = mean,
     value.var = c(
       "wake_min", "sol_min", "waso_min", "light_min", "stage3_min", "rem_min", "tst_min",
@@ -79,80 +79,68 @@ pred_tibq5_isi1_11c_draws <- lapply(pred_tibq5_isi1_11c, function(d) {
   # grand mean min and percentages
   for (part in c("sol", "waso", "light", "stage3", "rem", "wake", "tst")) {
     d[, paste0(part, "_min_mean") := rowMeans(.SD, na.rm = TRUE),
-      .SDcols = paste0(part, "_min_isi", rep(1, 5), "_q", rep(1:5, 2))
+      .SDcols = paste0(part, "_min_isi", rep(11, 5), "_p", rep(c(10, 25, 50, 75, 90), 2))
     ]
   }
   for (part in c("light", "stage3", "rem")) {
     d[, paste0(part, "_perc_mean") := rowMeans(.SD, na.rm = TRUE),
-      .SDcols = paste0(part, "_perc_isi", rep(1, 3), "_q", rep(1:5, 2))
+      .SDcols = paste0(part, "_perc_isi", rep(11, 3), "_p", rep(c(10, 25, 50, 75, 90), 2))
     ]
   }
 
-  # # means across quartiles
-  # for (part in c("sol", "waso", "light", "stage3", "rem", "wake", "tst")) {
-  #   d[, paste0(part, "_min_", "isi1") := rowMeans(.SD, na.rm = TRUE),
-  #     .SDcols = paste0(part, "_min_", "isi1", "_q", 1:5)
-  #   ]
-  # }
-  # for (part in c("light", "stage3", "rem")) {
-  #   d[, paste0(part, "_perc_", "isi1") := rowMeans(.SD, na.rm = TRUE),
-  #     .SDcols = paste0(part, "_perc_", "isi1", "_q", 1:5)
-  #   ]
-  # }
-
-  # difference between isi1, q1 vs q234
+  # difference between isi11, p10 vs p2575
   for (part in c("sol", "waso", "light", "stage3", "rem", "wake", "tst")) {
-    d[, paste0(part, "_min_isi1_q1_q234") :=
-      get(paste0(part, "_min_isi1_q1"))
-      - ((get(paste0(part, "_min_isi1_q2")) + get(paste0(part, "_min_isi1_q3")) + get(paste0(part, "_min_isi1_q4"))) / 3)]
+    d[, paste0(part, "_min_isi11_p10_p2575") :=
+      get(paste0(part, "_min_isi11_p10"))
+      - ((get(paste0(part, "_min_isi11_p25")) + get(paste0(part, "_min_isi11_p50")) + get(paste0(part, "_min_isi11_p75"))) / 3)]
 
-    d[, paste0(part, "_min_isi1_q5_q234") :=
-      get(paste0(part, "_min_isi1_q5"))
-      - ((get(paste0(part, "_min_isi1_q2")) + get(paste0(part, "_min_isi1_q3")) + get(paste0(part, "_min_isi1_q4"))) / 3)]
+    d[, paste0(part, "_min_isi11_p90_p2575") :=
+      get(paste0(part, "_min_isi11_p90"))
+      - ((get(paste0(part, "_min_isi11_p25")) + get(paste0(part, "_min_isi11_p50")) + get(paste0(part, "_min_isi11_p75"))) / 3)]
 
-    d[, paste0(part, "_min_isi1_q1_q5") :=
-      get(paste0(part, "_min_isi1_q1"))
-      - get(paste0(part, "_min_isi1_q5"))]
+    d[, paste0(part, "_min_isi11_p10_p90") :=
+      get(paste0(part, "_min_isi11_p10"))
+      - get(paste0(part, "_min_isi11_p90"))]
   }
   for (part in c("light", "stage3", "rem")) {
-    d[, paste0(part, "_perc_isi1_q1_q234") :=
-      get(paste0(part, "_perc_isi1_q1"))
-      - ((get(paste0(part, "_perc_isi1_q2")) + get(paste0(part, "_perc_isi1_q3")) + get(paste0(part, "_perc_isi1_q4"))) / 3)]
+    d[, paste0(part, "_perc_isi11_p10_p2575") :=
+      get(paste0(part, "_perc_isi11_p10"))
+      - ((get(paste0(part, "_perc_isi11_p25")) + get(paste0(part, "_perc_isi11_p50")) + get(paste0(part, "_perc_isi11_p75"))) / 3)]
 
-    d[, paste0(part, "_perc_isi1_q5_q234") :=
-      get(paste0(part, "_perc_isi1_q5"))
-      - ((get(paste0(part, "_perc_isi1_q2")) + get(paste0(part, "_perc_isi1_q3")) + get(paste0(part, "_perc_isi1_q4"))) / 3)]
+    d[, paste0(part, "_perc_isi11_p90_p2575") :=
+      get(paste0(part, "_perc_isi11_p90"))
+      - ((get(paste0(part, "_perc_isi11_p25")) + get(paste0(part, "_perc_isi11_p50")) + get(paste0(part, "_perc_isi11_p75"))) / 3)]
 
-    d[, paste0(part, "_perc_isi1_q1_q5") :=
-      get(paste0(part, "_perc_isi1_q1"))
-      - get(paste0(part, "_perc_isi1_q5"))]
+    d[, paste0(part, "_perc_isi11_p10_p90") :=
+      get(paste0(part, "_perc_isi11_p10"))
+      - get(paste0(part, "_perc_isi11_p90"))]
   }
   d
 })
-saveRDS(pred_tibq5_isi1_11c_draws, file.path(out, "pred_tibq5_isi1_11c_draws.rds"))
+saveRDS(pred_tib_isi11_draws, file.path(out, "pred_tib_isi11_draws.rds"))
 
 # prep final data
-pred_tibq5_isi1_11c_draws <- readRDS(file.path(out, "pred_tibq5_isi1_11c_draws.rds"))
+pred_tib_isi11_draws <- readRDS(file.path(out, "pred_tib_isi11_draws.rds"))
 
-pred_tibq5_isi1_11c_draws <- as.data.table(abind(pred_tibq5_isi1_11c_draws, along = 1))
-# pred_tibq5_isi1_11c_draws <- split(pred_tibq5_isi1_11c_draws, pred_tibq5_isi1_11c_draws$so_min)
+pred_tib_isi11_draws <- as.data.table(abind(pred_tib_isi11_draws, along = 1))
+# pred_tib_isi11_draws <- split(pred_tib_isi11_draws, pred_tib_isi11_draws$so_min)
 
-pred_tibq5_isi1_11c_sum <- apply(pred_tibq5_isi1_11c_draws, 2, function(x) {
+pred_tib_isi11_sum <- apply(pred_tib_isi11_draws, 2, function(x) {
   describe_posterior(as.numeric(x), centrality = "mean", ci = 0.95)
 })
-pred_tibq5_isi1_11c_sum <- rbindlist(pred_tibq5_isi1_11c_sum)
+pred_tib_isi11_sum <- rbindlist(pred_tib_isi11_sum)
 
-pred_tibq5_isi1_11c_sum[, par := colnames(pred_tibq5_isi1_11c_draws)]
+pred_tib_isi11_sum[, par := colnames(pred_tib_isi11_draws)]
 
-pred_tibq5_isi1_11c_sum[, part_label := NA]
-pred_tibq5_isi1_11c_sum[, part_label := ifelse(grepl("sol", par) & grepl("min|perc", par), "SOL", part_label)]
-pred_tibq5_isi1_11c_sum[, part_label := ifelse(grepl("waso", par) & grepl("min|perc", par), "WASO", part_label)]
-pred_tibq5_isi1_11c_sum[, part_label := ifelse(grepl("light", par) & grepl("min|perc", par), "N1+2", part_label)]
-pred_tibq5_isi1_11c_sum[, part_label := ifelse(grepl("stage3", par) & grepl("min|perc", par), "N3", part_label)]
-pred_tibq5_isi1_11c_sum[, part_label := ifelse(grepl("rem", par) & grepl("min|perc", par), "REM", part_label)]
-pred_tibq5_isi1_11c_sum[, part_label := ifelse(grepl("wake", par) & grepl("min|perc", par), "WD", part_label)]
+pred_tib_isi11_sum[, part_label := NA]
+pred_tib_isi11_sum[, part_label := ifelse(grepl("sol", par) & grepl("min|perc", par), "SOL", part_label)]
+pred_tib_isi11_sum[, part_label := ifelse(grepl("waso", par) & grepl("min|perc", par), "WASO", part_label)]
+pred_tib_isi11_sum[, part_label := ifelse(grepl("light", par) & grepl("min|perc", par), "N1+2", part_label)]
+pred_tib_isi11_sum[, part_label := ifelse(grepl("stage3", par) & grepl("min|perc", par), "N3", part_label)]
+pred_tib_isi11_sum[, part_label := ifelse(grepl("rem", par) & grepl("min|perc", par), "REM", part_label)]
+pred_tib_isi11_sum[, part_label := ifelse(grepl("wake", par) & grepl("min|perc", par), "WD", part_label)]
 
-pred_tibq5_isi1_11c_sum[, part_label := factor(part_label, ordered = TRUE, levels = c(
+pred_tib_isi11_sum[, part_label := factor(part_label, ordered = TRUE, levels = c(
   "WD",
   "SOL",
   "N1+2",
@@ -160,38 +148,38 @@ pred_tibq5_isi1_11c_sum[, part_label := factor(part_label, ordered = TRUE, level
   "REM",
   "WASO"
 ))]
-table(pred_tibq5_isi1_11c_sum$part_label, useNA = "always")
+table(pred_tib_isi11_sum$part_label, useNA = "always")
 
-pred_tibq5_isi1_11c_sum[, tib_group := NA]
-pred_tibq5_isi1_11c_sum[, tib_group := ifelse(grepl("isi[0:1]_q1", par), "P10 SO", tib_group)]
-pred_tibq5_isi1_11c_sum[, tib_group := ifelse(grepl("isi[0:1]_q2", par), "P25 SO", tib_group)]
-pred_tibq5_isi1_11c_sum[, tib_group := ifelse(grepl("isi[0:1]_q3", par), "P50 SO", tib_group)]
-pred_tibq5_isi1_11c_sum[, tib_group := ifelse(grepl("isi[0:1]_q4", par), "P75 SO", tib_group)]
-pred_tibq5_isi1_11c_sum[, tib_group := ifelse(grepl("isi[0:1]_q5", par), "P90 SO", tib_group)]
+pred_tib_isi11_sum[, tib_group := NA]
+pred_tib_isi11_sum[, tib_group := ifelse(grepl("isi11_p10", par), "P10 SO", tib_group)]
+pred_tib_isi11_sum[, tib_group := ifelse(grepl("isi11_p25", par), "P25 SO", tib_group)]
+pred_tib_isi11_sum[, tib_group := ifelse(grepl("isi11_p50", par), "P50 SO", tib_group)]
+pred_tib_isi11_sum[, tib_group := ifelse(grepl("isi11_p75", par), "P75 SO", tib_group)]
+pred_tib_isi11_sum[, tib_group := ifelse(grepl("isi11_p90", par), "P90 SO", tib_group)]
 
-table(pred_tibq5_isi1_11c_sum$tib_group, useNA = "always")
+table(pred_tib_isi11_sum$tib_group, useNA = "always")
 
 # types of estimates
-table(pred_tibq5_isi1_11c_sum$par, useNA = "always")
-pred_tibq5_isi1_11c_sum[, contrast := NA]
-pred_tibq5_isi1_11c_sum[, contrast := ifelse(grepl("q1_q5", par), 1, contrast)]
-pred_tibq5_isi1_11c_sum[, contrast := ifelse(grepl("q1_q234", par), 1, contrast)]
-pred_tibq5_isi1_11c_sum[, contrast := ifelse(grepl("q5_q234", par), 1, contrast)]
-pred_tibq5_isi1_11c_sum[, contrast := ifelse(is.na(contrast), 0, contrast)]
-pred_tibq5_isi1_11c_sum[, mean := ifelse(contrast == 0, 1, 0)]
+table(pred_tib_isi11_sum$par, useNA = "always")
+pred_tib_isi11_sum[, contrast := NA]
+pred_tib_isi11_sum[, contrast := ifelse(grepl("p10_p90", par), 1, contrast)]
+pred_tib_isi11_sum[, contrast := ifelse(grepl("p10_p2575", par), 1, contrast)]
+pred_tib_isi11_sum[, contrast := ifelse(grepl("p90_p2575", par), 1, contrast)]
+pred_tib_isi11_sum[, contrast := ifelse(is.na(contrast), 0, contrast)]
+pred_tib_isi11_sum[, mean := ifelse(contrast == 0, 1, 0)]
 
-table(pred_tibq5_isi1_11c_sum$mean, useNA = "always")
-table(pred_tibq5_isi1_11c_sum$contrast, useNA = "always")
-# table(pred_tibq5_isi1_11c_sum$perc, useNA = "always")
+table(pred_tib_isi11_sum$mean, useNA = "always")
+table(pred_tib_isi11_sum$contrast, useNA = "always")
+# table(pred_tib_isi11_sum$perc, useNA = "always")
 
-pred_tibq5_isi1_11c_sum[, sig := ifelse(!between(0, CI_low, CI_high), "$^a$", "$\\phantom{^a}$")]
-table(pred_tibq5_isi1_11c_sum$sig, useNA = "always")
+pred_tib_isi11_sum[, sig := ifelse(!between(0, CI_low, CI_high), "$^a$", "$\\phantom{^a}$")]
+table(pred_tib_isi11_sum$sig, useNA = "always")
 
-pred_tibq5_isi1_11c_sum[grepl("min", par) & !grepl("perc", par), est_min := paste0(round(Mean, 0), " [", round(CI_low, 0), ", ", round(CI_high, 0), "]")]
-pred_tibq5_isi1_11c_sum[grepl("perc", par), est_perc := paste0(format(round(Mean, 2), nsmall = 2), " [", format(round(CI_low, 2), nsmall = 2), ", ", format(round(CI_high, 2), nsmall = 2), "]")]
+pred_tib_isi11_sum[grepl("min", par) & !grepl("perc", par), est_min := paste0(round(Mean, 0), " [", round(CI_low, 0), ", ", round(CI_high, 0), "]")]
+pred_tib_isi11_sum[grepl("perc", par), est_perc := paste0(format(round(Mean, 2), nsmall = 2), " [", format(round(CI_low, 2), nsmall = 2), ", ", format(round(CI_high, 2), nsmall = 2), "]")]
 
-saveRDS(pred_tibq5_isi1_11c_sum, file.path(out, "pred_tibq5_isi1_11c_sum.rds"))
-pred_tibq5_isi1_11c_sum <- readRDS(file.path(out, "pred_tibq5_isi1_11c_sum.rds"))
+saveRDS(pred_tib_isi11_sum, file.path(out, "pred_tib_isi11_sum.rds"))
+pred_tib_isi11_sum <- readRDS(file.path(out, "pred_tib_isi11_sum.rds"))
 
 ### plot -----------------------
 ## plot_min -----------------------
@@ -221,7 +209,7 @@ make_min_plot <- function(part_label) {
   params <- plot_min_params[[part_label]]
   part <- part_label
   ggplot(
-    pred_tibq5_isi1_11c_sum[!is.na(tib_group) & part_label == part & grepl("min", par) & contrast == 0],
+    pred_tib_isi11_sum[!is.na(tib_group) & part_label == part & grepl("min", par) & contrast == 0],
     aes(x = tib_group, y = Mean, colour = tib_group)
   ) +
     # geom_hline(aes(yintercept = yintercept_insom), linewidth = 0.75, linetype = "dashed", colour = "#DCD5CE") +
@@ -282,7 +270,7 @@ make_min_plot <- function(part_label) {
 plots_min <- lapply(names(plot_min_params), make_min_plot)
 names(plots_min) <- names(plot_min_params)
 
-plot_min_isi1_11c <- ggarrange(
+plot_min_isi11 <- ggarrange(
   plots_min[["WD"]],
   plots_min[["SOL"]],
   plots_min[["WASO"]],
@@ -290,7 +278,7 @@ plot_min_isi1_11c <- ggarrange(
   plots_min[["N3"]],
   plots_min[["REM"]],
   labels = c(
-    "  Wake During the Day (min)",
+    "  Daytime Wake (min)",
     "  Sleep Onset Latency (min)",
     "  Wake After Sleep Onset (min)",
     "  N1+2 (min)",
@@ -301,7 +289,7 @@ plot_min_isi1_11c <- ggarrange(
   ncol = 3, nrow = 2, common.legend = TRUE, legend = "none",
   font.label = list(size = 16, face = "italic", family = "Arial Narrow")
 ) + theme(plot.margin = unit(c(0, 0, 0, 0), "lines"))
-ggsave(file.path(out, paste0("plot_min_isi1_11c", ".pdf")), plot_min_isi1_11c, device = cairo_pdf, width = 12, height = 8, dpi = 300)
+ggsave(file.path(out, paste0("plot_min_isi11", ".pdf")), plot_min_isi11, device = cairo_pdf, width = 12, height = 8, dpi = 300)
 
 ## plot_perc -----------------------
 plot_perc_params <- list(
@@ -323,7 +311,7 @@ make_perc_plot <- function(part_label) {
   params <- plot_perc_params[[part_label]]
   part <- part_label
   ggplot(
-    pred_tibq5_isi1_11c_sum[!is.na(tib_group) & part_label == part & grepl("perc", par) & contrast == 0],
+    pred_tib_isi11_sum[!is.na(tib_group) & part_label == part & grepl("perc", par) & contrast == 0],
     aes(x = tib_group, y = Mean, colour = tib_group)
   ) +
     # geom_hline(aes(yintercept = yintercept_insom), linewidth = 0.75, linetype = "dashed", colour = "#DCD5CE") +
@@ -383,7 +371,7 @@ make_perc_plot <- function(part_label) {
 plots_perc <- lapply(names(plot_perc_params), make_perc_plot)
 names(plots_perc) <- names(plot_perc_params)
 
-plot_perc_isi1_11c <- ggarrange(
+plot_perc_isi11 <- ggarrange(
   # plots_perc[["WASO"]],
   plots_perc[["N1+2"]],
   plots_perc[["N3"]],
@@ -398,7 +386,7 @@ plot_perc_isi1_11c <- ggarrange(
   ncol = 3, nrow = 1, common.legend = TRUE, legend = "none",
   font.label = list(size = 16, face = "italic", family = "Arial Narrow")
 ) + theme(plot.margin = unit(c(0, 0, 0, 0), "lines"))
-ggsave(file.path(out, paste0("plot_perc_isi1_11c", ".pdf")), plot_perc_isi1_11c, device = cairo_pdf, width = 12, height = 4, dpi = 300)
+ggsave(file.path(out, paste0("plot_perc_isi11", ".pdf")), plot_perc_isi11, device = cairo_pdf, width = 12, height = 4, dpi = 300)
 
 # patch into one figure -----------------------------------------------
 subtitle_plot <- function(label, margin_cm = c(0, 0, 2, 0)) {
@@ -406,18 +394,18 @@ subtitle_plot <- function(label, margin_cm = c(0, 0, 2, 0)) {
     labs(title = label) +
     theme_void() +
     theme(
-      plot.title  = element_text(
+      plot.title = element_text(
         family = "Arial Narrow",
         face   = "bold",
         size   = 16,
-        hjust  = 0      # 0 = left, 0.5 = centre, 1 = right
+        hjust  = 0 # 0 = left, 0.5 = centre, 1 = right
       )
     )
 }
 
-plot_min_perc_isi1_11c <-
-  subtitle_plot(" A. 24h Sleep-Wake Architecture Composition") / plot_min_isi1_11c /
-  subtitle_plot(" B. Sleep Architecture Composition") / plot_perc_isi1_11c +
+plot_min_perc_isi11 <-
+  subtitle_plot(" A. 24h Sleep-Wake Architecture Composition") / plot_min_isi11 /
+  subtitle_plot(" B. Sleep Architecture Composition") / plot_perc_isi11 +
   plot_layout(heights = c(0, 2, 0, 1))
-ggsave(file.path(out, paste0("plot_min_perc_isi1_11c", ".pdf")), plot_min_perc_isi1_11c, device = cairo_pdf, width = 11, height = 11, dpi = 300, limitsize = FALSE)
-ggsave(file.path(out, paste0("plot_min_perc_isi1_11c", ".png")), plot_min_perc_isi1_11c, device = "png", width = 11, height = 11, dpi = 300)
+ggsave(file.path(out, paste0("plot_min_perc_isi11", ".pdf")), plot_min_perc_isi11, device = cairo_pdf, width = 11, height = 11, dpi = 300, limitsize = FALSE)
+ggsave(file.path(out, paste0("plot_min_perc_isi11", ".png")), plot_min_perc_isi11, device = "png", width = 11, height = 11, dpi = 300)
