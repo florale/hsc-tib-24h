@@ -4,6 +4,8 @@ out <- paste0("/Users/", Sys.info()[["user"]], "/Library/CloudStorage/OneDrive-P
 redir <- paste0("/Users/", Sys.info()[["user"]], "/Library/CloudStorage/OneDrive-Personal/github/projects/hsc/")
 source(paste0(redir, "setup.r"))
 
+library(pdftools)
+
 # scales::show_col(tvthemes:::hilda_palette$Day)
 # scales::show_col(tvthemes:::hilda_palette$Night)
 # scales::show_col(tvthemes:::hilda_palette$Dusk)
@@ -88,23 +90,6 @@ col_age <- c(
   "#c48462"
 )
 col_sex <- col_serv <- col_age
-
-# col <- c(
-#   # "#F6E0D2",
-#   "#c48462",
-#   "#9C6755",
-#   "#659794",
-#   "#586085",
-#   "#F5C98E" # B87474
-# )
-# colf <- c(
-#   `REM` = "#DFA398",
-#   `N3` = "#9C6755",
-#   `N1+2` = "#659794",
-#   `WASO` = "#586085", # #586085
-#   `SOL` = "#F5C98E",
-#   `WD` = "#F6E0D2"
-# )
 
 protan <- dichromat::dichromat(col, type = "protan")
 deutan <- dichromat::dichromat(col, type = "deutan")
