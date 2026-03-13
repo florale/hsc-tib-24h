@@ -56,7 +56,7 @@ clr$dataout[, so_min_p := factor(so_min_p, levels = so_min_levels, ordered = TRU
 vars <- c(
  "age", 
  
- "sex", "ethncg", "coupled", "educ", "working", "income3cat",  "antidep",
+ "sex", "ethncg", "coupled", "educ", "working", "income3cat",  "antidep", "labpsg",
  "bmi", "isi",
  
 #  "perHrAHSleep",
@@ -68,7 +68,7 @@ vars <- c(
 labels <- c(
  "Age (years)",
   "Sex", "Ethnicity", "Married or de facto", "Education", "Currently working", 
-  "Income", "Antidepressant use",
+  "Income", "Antidepressant use", "In-lab PSG",
   "Body mass index (kg/m²)", "Insomnia Severity Index",
 
   "Sleep opportunity (min)", "Total sleep time (min)", "Sleep efficiency (%)",
