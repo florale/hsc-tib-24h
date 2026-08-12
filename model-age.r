@@ -16,7 +16,7 @@ clr_isi8$dataout[, so_min := 1440 - twake_min]
 m_tib_isi8_age <- brmcoda(clr_isi8,
   mvbind(z1_1, z2_1, z3_1, z4_1, z5_1) ~
     s(so_min, by = age45) +
-    female + bmi + white + working + labpsg + s(perHrAHSleep) + antidep,
+    female + bmi + white + working + labpsg + s(perHrAHSleep) + antidep + nap,
   iter = 4000, chains = 6, cores = 6, seed = 123, warmup = 1000,
   backend = "cmdstanr"
 )

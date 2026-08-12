@@ -91,9 +91,9 @@ col_age <- c(
 )
 col_sex <- col_serv <- col_age
 
-protan <- dichromat::dichromat(col, type = "protan")
-deutan <- dichromat::dichromat(col, type = "deutan")
-tritan <- dichromat::dichromat(col, type = "tritan")
+# protan <- dichromat::dichromat(col, type = "protan")
+# deutan <- dichromat::dichromat(col, type = "deutan")
+# tritan <- dichromat::dichromat(col, type = "tritan")
 
 # # plot for comparison
 # layout(matrix(1:4, nrow = 4)); par(mar = rep(1, 4))

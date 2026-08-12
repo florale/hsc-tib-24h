@@ -6,6 +6,38 @@ parts <- c("wake_min", "sol_min", "light_min", "stage3_min", "rem_min", "waso_mi
 # Filter to adults only
 dpsg <- dpsg[age >= 18]
 
+ahi_severity_levels <- c(
+  "Normal (AHI <5)",
+  "Mild OSA (AHI 5–14.9)",
+  "Moderate OSA (AHI 15–29.9)",
+  "Severe OSA (AHI ≥30)"
+)
+dpsg[, ahi_severity := cut(
+  perHrAHSleep,
+  breaks = c(-Inf, 5, 15, 30, Inf),
+  labels = ahi_severity_levels,
+  right = FALSE,
+  ordered_result = TRUE
+)]
+
+isi_severity_levels <- c(
+  "No clinically significant insomnia (ISI 0–7)",
+  "Subthreshold insomnia (ISI 8–14)",
+  "Moderate clinical insomnia (ISI 15–21)",
+  "Severe clinical insomnia (ISI 22–28)"
+)
+dpsg[, isi_severity := factor(
+  fcase(
+    between(isi, 0, 7), isi_severity_levels[1],
+    between(isi, 8, 14), isi_severity_levels[2],
+    between(isi, 15, 21), isi_severity_levels[3],
+    between(isi, 22, 28), isi_severity_levels[4],
+    default = NA_character_
+  ),
+  levels = isi_severity_levels,
+  ordered = TRUE
+)]
+
 dpsg[, ethncg := NA]
 dpsg[, ethncg := ifelse(ethnicity == "Caucasian", "White", ethncg)]
 dpsg[, ethncg := ifelse(ethnicity %in% c("Northeast Asian", "South Asian", "Southeast Asian"), "Asian (Northeast / Southeast / South)", ethncg)]
@@ -52,14 +84,16 @@ clr$dataout[, so_min_p := fifelse(
 
 clr$dataout[, so_min_p := factor(so_min_p, levels = so_min_levels, ordered = TRUE)]
 
+clr$dataout[perHrAHSleep > 30]
+
 # descriptive summary
 vars <- c(
  "age", 
  
- "sex", "ethncg", "coupled", "educ", "working", "income3cat",  "antidep", "labpsg",
- "bmi", "isi",
+ "sex", "ethncg", "coupled", "educ", "working", "income3cat",  "antidep", "labpsg", "nap",
+ "bmi", "isi", "isi_severity",
  
-#  "perHrAHSleep",
+ "perHrAHSleep", "ahi_severity",
  "so_min", "tst_min", "se",
  "twake_min", "tsol_min", "tlight_min", "tstage3_min", "trem_min", 
  "twaso_min"
@@ -68,8 +102,10 @@ vars <- c(
 labels <- c(
  "Age (years)",
   "Sex", "Ethnicity", "Married or de facto", "Education", "Currently working", 
-  "Income", "Antidepressant use", "In-lab PSG",
-  "Body mass index (kg/m²)", "Insomnia Severity Index",
+  "Income", "Antidepressant use", "In-lab PSG", "Nap",
+  "Body mass index (kg/m²)", "Insomnia Severity Index", "Insomnia severity",
+
+  "Apnea-hypopnea index (events/hour)", "OSA severity",
 
   "Sleep opportunity (min)", "Total sleep time (min)", "Sleep efficiency (%)",
   "Daytime wake (min)", "Sleep onset latency (min)", 
