@@ -1,1 +1,1 @@
-# hsc-psg-tib-24h
+Analysis code for the manuscript **"What gives, what takes? Trade-offs of time in polysomnography-measured 24-hour sleep-wake composition by sleep opportunity in individuals with insomnia symptoms"**
